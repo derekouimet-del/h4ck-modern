@@ -14,7 +14,7 @@ import httpx
 
 from .netbat import scan_ports
 from .output import Finding, Reporter
-from .scope import ScopeError, validate_targets, confirm_random_internet
+from .scope import ScopeError, validate_targets
 from .utils import generate_random_public_ips
 
 
@@ -92,8 +92,6 @@ async def fortune_http_cam(
     """Probe random IPs for exposed HTTP camera/web interfaces (fortune_http_cam)."""
     if not allow_random:
         raise ScopeError("Random internet scanning requires --random-internet.")
-    if not confirm_random_internet():
-        return []
 
     ips = generate_random_public_ips(count)
     semaphore = asyncio.Semaphore(100)
@@ -133,8 +131,6 @@ async def fortune_rtsp(
     """Probe random IPs for open RTSP port 554 (fortune_rtsp)."""
     if not allow_random:
         raise ScopeError("Random internet scanning requires --random-internet.")
-    if not confirm_random_internet():
-        return []
 
     ips = generate_random_public_ips(count)
     results = await scan_ports(

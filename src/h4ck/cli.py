@@ -27,7 +27,7 @@ from .vpn import vpn_connect
 from .webmap import scan_web
 from .whois import whois_lookup
 from .camposter import camposter as camposter_module
-from .camdike import camdike as camdike_module, camdike_lite as camdike_lite_module, camdike_lite_no_brute as camdike_lite_no_brute_module
+from .camdike import camdike_module, camdike_lite_module, camdike_lite_no_brute_module
 
 app = typer.Typer(
     name="h4ck",
@@ -471,18 +471,25 @@ def camdike(
     ),
 ) -> None:
     """Full camdike pipeline: scan -> brute -> capture -> post (camdike.sh)."""
-    camdike_module(
-        count=count,
-        random_internet=random_internet,
-        confirm=confirm,
-        authorize_brute=authorize_brute,
-        wordlist=wordlist,
-        post_target=post_target,
-        post_data=post_data,
-        loop=loop,
-        json_out=json_out,
-        timeout_minutes=timeout_minutes,
-    )
+    async def _run():
+        await camdike_module(
+            count=count,
+            random_internet=random_internet,
+            confirm=confirm,
+            authorize_brute=authorize_brute,
+            wordlist=wordlist,
+            post_target=post_target,
+            post_data=post_data,
+            loop=loop,
+            json_out=json_out,
+            timeout_minutes=timeout_minutes,
+        )
+
+    try:
+        asyncio.run(_run())
+    except ScopeError as exc:
+        console.print(f"[red]Scope error:[/red] {exc}")
+        raise typer.Exit(code=1)
 
 
 @app.command()
@@ -512,17 +519,24 @@ def camdike_lite(
     json_out: bool = typer.Option(False, "--json", help="Emit JSON"),
 ) -> None:
     """Lite camdike pipeline (camdike_lite.sh)."""
-    camdike_lite_module(
-        count=count,
-        random_internet=random_internet,
-        confirm=confirm,
-        authorize_brute=authorize_brute,
-        wordlist=wordlist,
-        post_target=post_target,
-        post_data=post_data,
-        loop=loop,
-        json_out=json_out,
-    )
+    async def _run():
+        await camdike_lite_module(
+            count=count,
+            random_internet=random_internet,
+            confirm=confirm,
+            authorize_brute=authorize_brute,
+            wordlist=wordlist,
+            post_target=post_target,
+            post_data=post_data,
+            loop=loop,
+            json_out=json_out,
+        )
+
+    try:
+        asyncio.run(_run())
+    except ScopeError as exc:
+        console.print(f"[red]Scope error:[/red] {exc}")
+        raise typer.Exit(code=1)
 
 
 @app.command()
@@ -546,15 +560,22 @@ def camdike_lite_no_brute(
     json_out: bool = typer.Option(False, "--json", help="Emit JSON"),
 ) -> None:
     """Lite camdike without brute force (camdike_lite_no_brute.sh)."""
-    camdike_lite_no_brute_module(
-        count=count,
-        random_internet=random_internet,
-        confirm=confirm,
-        post_target=post_target,
-        post_data=post_data,
-        loop=loop,
-        json_out=json_out,
-    )
+    async def _run():
+        await camdike_lite_no_brute_module(
+            count=count,
+            random_internet=random_internet,
+            confirm=confirm,
+            post_target=post_target,
+            post_data=post_data,
+            loop=loop,
+            json_out=json_out,
+        )
+
+    try:
+        asyncio.run(_run())
+    except ScopeError as exc:
+        console.print(f"[red]Scope error:[/red] {exc}")
+        raise typer.Exit(code=1)
 
 
 def main() -> None:

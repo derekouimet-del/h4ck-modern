@@ -13,22 +13,15 @@ import asyncio
 from pathlib import Path
 from typing import Optional
 
-import typer
 from rich.console import Console
 
 from .fortune import fortune_rtsp as fortune_rtsp_module
 from .output import Reporter
 from .rtsp import rtsp_brute as rtsp_brute_module, rtsp_capture as rtsp_capture_module
-from .scope import ScopeError, confirm_random_internet
+from .scope import ScopeError
 from .camposter import camposter as camposter_module
 
 console = Console()
-
-
-def _need_confirm(random_internet: bool) -> bool:
-    if random_internet:
-        return confirm_random_internet()
-    return True
 
 
 async def _run_pipeline(
@@ -45,7 +38,7 @@ async def _run_pipeline(
     post_data: Optional[str],
     reporter: Reporter,
 ) -> None:
-    if not _need_confirm(random_internet):
+    if random_internet and not confirm:
         console.print("[yellow]Aborted.[/yellow]")
         return
 
@@ -115,123 +108,41 @@ async def _run_pipeline(
         )
 
 
-def _run_loop(
+async def camdike_module(
     *,
     count: int,
     random_internet: bool,
     confirm: bool,
     authorize_brute: bool,
     wordlist: Optional[Path],
-    do_brute: bool,
-    do_capture: bool,
-    do_post: bool,
     post_target: str,
     post_data: Optional[str],
-    reporter: Reporter,
-) -> None:
-    async def _run_once():
-        await _run_pipeline(
-            count=count,
-            random_internet=random_internet,
-            confirm=confirm,
-            authorize_brute=authorize_brute,
-            wordlist=wordlist,
-            do_brute=do_brute,
-            do_capture=do_capture,
-            do_post=do_post,
-            post_target=post_target,
-            post_data=post_data,
-            reporter=reporter,
-        )
-
-    async def _main():
-        while True:
-            await _run_once()
-            reporter.summary()
-            await asyncio.sleep(5)
-
-    asyncio.run(_main())
-
-
-def _run_once_only(
-    *,
-    count: int,
-    random_internet: bool,
-    confirm: bool,
-    authorize_brute: bool,
-    wordlist: Optional[Path],
-    do_brute: bool,
-    do_capture: bool,
-    do_post: bool,
-    post_target: str,
-    post_data: Optional[str],
-    reporter: Reporter,
-) -> None:
-    async def _run_once():
-        await _run_pipeline(
-            count=count,
-            random_internet=random_internet,
-            confirm=confirm,
-            authorize_brute=authorize_brute,
-            wordlist=wordlist,
-            do_brute=do_brute,
-            do_capture=do_capture,
-            do_post=do_post,
-            post_target=post_target,
-            post_data=post_data,
-            reporter=reporter,
-        )
-
-    asyncio.run(_run_once())
-
-
-def camdike(
-    count: int = typer.Option(32, "--count", "-c", help="Random IPs to scan"),
-    random_internet: bool = typer.Option(
-        False, "--random-internet", help="Enable random public IP scanning"
-    ),
-    confirm: bool = typer.Option(
-        False, "--confirm", help="Skip interactive confirmation"
-    ),
-    authorize_brute: bool = typer.Option(
-        False, "--authorize-brute", help="Authorize RTSP brute-forcing"
-    ),
-    wordlist: Optional[Path] = typer.Option(
-        None, "--wordlist", "-w", help="Wordlist file"
-    ),
-    post_target: str = typer.Option(
-        "http://localhost", "--post-target", help="camposter target URL"
-    ),
-    post_data: Optional[str] = typer.Option(
-        None, "--post-data", "-d", help="POST body"
-    ),
-    loop: bool = typer.Option(
-        True, "--loop/--no-loop", help="Run in a loop"
-    ),
-    json_out: bool = typer.Option(False, "--json", help="Emit JSON"),
-    timeout_minutes: Optional[float] = typer.Option(
-        None, "--timeout-minutes", help="Stop after N minutes"
-    ),
+    loop: bool,
+    json_out: bool,
+    timeout_minutes: Optional[float],
 ) -> None:
     """Full camdike pipeline: scan -> brute -> capture -> post (camdike.sh)."""
     reporter = Reporter(json_out=json_out)
     try:
         if loop:
-            _run_loop(
-                count=count,
-                random_internet=random_internet,
-                confirm=confirm,
-                authorize_brute=authorize_brute,
-                wordlist=wordlist,
-                do_brute=True,
-                do_capture=True,
-                do_post=True,
-                post_target=post_target,
-                post_data=post_data,
-                reporter=reporter,
-            )
+            while True:
+                await _run_pipeline(
+                    count=count,
+                    random_internet=random_internet,
+                    confirm=confirm,
+                    authorize_brute=authorize_brute,
+                    wordlist=wordlist,
+                    do_brute=True,
+                    do_capture=True,
+                    do_post=True,
+                    post_target=post_target,
+                    post_data=post_data,
+                    reporter=reporter,
+                )
+                reporter.summary()
+                await asyncio.sleep(5)
         else:
-            _run_once_only(
+            await _run_pipeline(
                 count=count,
                 random_internet=random_internet,
                 confirm=confirm,
@@ -246,56 +157,46 @@ def camdike(
             )
     except ScopeError as exc:
         console.print(f"[red]Scope error:[/red] {exc}")
-        raise typer.Exit(code=1)
+        raise
     except KeyboardInterrupt:
         pass
     reporter.summary()
 
 
-def camdike_lite(
-    count: int = typer.Option(32, "--count", "-c", help="Random IPs to scan"),
-    random_internet: bool = typer.Option(
-        False, "--random-internet", help="Enable random public IP scanning"
-    ),
-    confirm: bool = typer.Option(
-        False, "--confirm", help="Skip interactive confirmation"
-    ),
-    authorize_brute: bool = typer.Option(
-        False, "--authorize-brute", help="Authorize RTSP brute-forcing"
-    ),
-    wordlist: Optional[Path] = typer.Option(
-        None, "--wordlist", "-w", help="Wordlist file"
-    ),
-    post_target: str = typer.Option(
-        "http://localhost", "--post-target", help="camposter target URL"
-    ),
-    post_data: Optional[str] = typer.Option(
-        None, "--post-data", "-d", help="POST body"
-    ),
-    loop: bool = typer.Option(
-        True, "--loop/--no-loop", help="Run in a loop"
-    ),
-    json_out: bool = typer.Option(False, "--json", help="Emit JSON"),
+async def camdike_lite_module(
+    *,
+    count: int,
+    random_internet: bool,
+    confirm: bool,
+    authorize_brute: bool,
+    wordlist: Optional[Path],
+    post_target: str,
+    post_data: Optional[str],
+    loop: bool,
+    json_out: bool,
 ) -> None:
     """Lite camdike pipeline (camdike_lite.sh)."""
     reporter = Reporter(json_out=json_out)
     try:
         if loop:
-            _run_loop(
-                count=count,
-                random_internet=random_internet,
-                confirm=confirm,
-                authorize_brute=authorize_brute,
-                wordlist=wordlist,
-                do_brute=True,
-                do_capture=True,
-                do_post=True,
-                post_target=post_target,
-                post_data=post_data,
-                reporter=reporter,
-            )
+            while True:
+                await _run_pipeline(
+                    count=count,
+                    random_internet=random_internet,
+                    confirm=confirm,
+                    authorize_brute=authorize_brute,
+                    wordlist=wordlist,
+                    do_brute=True,
+                    do_capture=True,
+                    do_post=True,
+                    post_target=post_target,
+                    post_data=post_data,
+                    reporter=reporter,
+                )
+                reporter.summary()
+                await asyncio.sleep(5)
         else:
-            _run_once_only(
+            await _run_pipeline(
                 count=count,
                 random_internet=random_internet,
                 confirm=confirm,
@@ -310,30 +211,21 @@ def camdike_lite(
             )
     except ScopeError as exc:
         console.print(f"[red]Scope error:[/red] {exc}")
-        raise typer.Exit(code=1)
+        raise
     except KeyboardInterrupt:
         pass
     reporter.summary()
 
 
-def camdike_lite_no_brute(
-    count: int = typer.Option(32, "--count", "-c", help="Random IPs to scan"),
-    random_internet: bool = typer.Option(
-        False, "--random-internet", help="Enable random public IP scanning"
-    ),
-    confirm: bool = typer.Option(
-        False, "--confirm", help="Skip interactive confirmation"
-    ),
-    post_target: str = typer.Option(
-        "http://localhost", "--post-target", help="camposter target URL"
-    ),
-    post_data: Optional[str] = typer.Option(
-        None, "--post-data", "-d", help="POST body"
-    ),
-    loop: bool = typer.Option(
-        True, "--loop/--no-loop", help="Run in a loop"
-    ),
-    json_out: bool = typer.Option(False, "--json", help="Emit JSON"),
+async def camdike_lite_no_brute_module(
+    *,
+    count: int,
+    random_internet: bool,
+    confirm: bool,
+    post_target: str,
+    post_data: Optional[str],
+    loop: bool,
+    json_out: bool,
 ) -> None:
     """Lite camdike without brute force (camdike_lite_no_brute.sh).
 
@@ -343,21 +235,24 @@ def camdike_lite_no_brute(
     reporter = Reporter(json_out=json_out)
     try:
         if loop:
-            _run_loop(
-                count=count,
-                random_internet=random_internet,
-                confirm=confirm,
-                authorize_brute=False,
-                wordlist=None,
-                do_brute=False,
-                do_capture=True,
-                do_post=True,
-                post_target=post_target,
-                post_data=post_data,
-                reporter=reporter,
-            )
+            while True:
+                await _run_pipeline(
+                    count=count,
+                    random_internet=random_internet,
+                    confirm=confirm,
+                    authorize_brute=False,
+                    wordlist=None,
+                    do_brute=False,
+                    do_capture=True,
+                    do_post=True,
+                    post_target=post_target,
+                    post_data=post_data,
+                    reporter=reporter,
+                )
+                reporter.summary()
+                await asyncio.sleep(5)
         else:
-            _run_once_only(
+            await _run_pipeline(
                 count=count,
                 random_internet=random_internet,
                 confirm=confirm,
@@ -372,7 +267,7 @@ def camdike_lite_no_brute(
             )
     except ScopeError as exc:
         console.print(f"[red]Scope error:[/red] {exc}")
-        raise typer.Exit(code=1)
+        raise
     except KeyboardInterrupt:
         pass
     reporter.summary()

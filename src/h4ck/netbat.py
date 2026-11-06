@@ -50,9 +50,12 @@ async def scan_ports(
     concurrency: int = 200,
     timeout: float = 2.0,
     allow_public: bool = False,
+    allow_random: bool = False,
     reporter: Reporter | None = None,
 ) -> list[PortResult]:
-    host_list = validate_targets(targets, allow_public=allow_public)
+    host_list = validate_targets(
+        targets, allow_public=allow_public, allow_random=allow_random
+    )
     host_list = expand_hosts(host_list)
     port_list = parse_ports(ports)
 
