@@ -87,6 +87,7 @@ async def scan_web(
     allow_public: bool = False,
     fuzz: bool = True,
     reporter: Reporter | None = None,
+    verbose: bool = False,
 ) -> list[dict]:
     plain_hosts: list[str] = []
     url_targets: list[str] = []
@@ -126,6 +127,14 @@ async def scan_web(
 
     for url, resp in zip(urls, responses):
         if not isinstance(resp, httpx.Response):
+            if verbose and reporter is not None:
+                reporter.add(
+                    Finding(
+                        category="web",
+                        target=url,
+                        detail="connection failed",
+                    )
+                )
             continue
 
         text = resp.text
@@ -168,14 +177,22 @@ async def scan_web(
         results.append(result)
 
         if reporter is not None:
+            detail = f"status={resp.status_code}"
+            if title:
+                detail += f" title={title!r}"
+            if cms:
+                detail += f" cms={','.join(cms)}"
+            if techs:
+                detail += f" techs={','.join(techs)}"
+            if found_paths:
+                detail += f" paths={','.join(found_paths)}"
+            if not verbose and not cms and not techs and not found_paths:
+                continue
             reporter.add(
                 Finding(
                     category="web",
                     target=url,
-                    detail=f"status={resp.status_code}"
-                    + (f" title={title!r}" if title else "")
-                    + (f" cms={','.join(cms)}" if cms else "")
-                    + (f" techs={','.join(techs)}" if techs else ""),
+                    detail=detail,
                     status=resp.status_code,
                     extra={"server": server, "cms": cms, "techs": techs},
                 )

@@ -51,6 +51,7 @@ def scan(
     allow_public: bool = typer.Option(False, "--allow-public", help="Allow scanning public targets"),
     json_out: bool = typer.Option(False, "--json", help="Emit JSON instead of rich text"),
     save: Optional[Path] = typer.Option(None, "--save", help="Save results to SQLite DB"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show all ports (open and closed)"),
 ) -> None:
     """TCP port scan (netbat / port_scanner)."""
     reporter = _reporter(json_out)
@@ -63,6 +64,7 @@ def scan(
             timeout=timeout,
             allow_public=allow_public,
             reporter=reporter,
+            verbose=verbose,
         )
 
     try:
@@ -88,6 +90,7 @@ def webmap(
     no_fuzz: bool = typer.Option(False, "--no-fuzz", help="Skip common-path probing"),
     json_out: bool = typer.Option(False, "--json", help="Emit JSON instead of rich text"),
     save: Optional[Path] = typer.Option(None, "--save", help="Save results to SQLite DB"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show all URLs probed, not just findings"),
 ) -> None:
     """Web tech / CMS detection + directory probe (webmap)."""
     reporter = _reporter(json_out)
@@ -100,6 +103,7 @@ def webmap(
             allow_public=allow_public,
             fuzz=not no_fuzz,
             reporter=reporter,
+            verbose=verbose,
         )
 
     try:
@@ -123,6 +127,7 @@ def http_scan(
     timeout: float = typer.Option(10.0, "--timeout", "-t", help="Per-request timeout"),
     allow_public: bool = typer.Option(False, "--allow-public", help="Allow scanning public targets"),
     json_out: bool = typer.Option(False, "--json", help="Emit JSON"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show all responses, not just findings"),
 ) -> None:
     """HTTP status/header scanner (http_scan)."""
     reporter = _reporter(json_out)
@@ -134,6 +139,7 @@ def http_scan(
             timeout=timeout,
             allow_public=allow_public,
             reporter=reporter,
+            verbose=verbose,
         )
 
     try:

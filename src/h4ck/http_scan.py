@@ -18,6 +18,7 @@ async def http_scan(
     timeout: float = 10.0,
     allow_public: bool = False,
     reporter: Reporter | None = None,
+    verbose: bool = False,
 ) -> list[dict]:
     """HTTP GET against *targets*, reporting status, headers, and body size."""
     from urllib.parse import urlparse
@@ -57,15 +58,25 @@ async def http_scan(
 
     for res in responses:
         results.append(res)
-        if reporter is not None and "error" not in res:
-            reporter.add(
-                Finding(
-                    category="http-scan",
-                    target=res["url"],
-                    detail=f"HTTP {res['status']} size={res['size']} server={res['server']}",
-                    status=res["status"],
+        if reporter is not None:
+            if "error" in res:
+                if verbose:
+                    reporter.add(
+                        Finding(
+                            category="http-scan",
+                            target=res["url"],
+                            detail=f"error: {res['error']}",
+                        )
+                    )
+            else:
+                reporter.add(
+                    Finding(
+                        category="http-scan",
+                        target=res["url"],
+                        detail=f"HTTP {res['status']} size={res['size']} server={res['server']}",
+                        status=res["status"],
+                    )
                 )
-            )
 
     results.sort(key=lambda r: r.get("url", ""))
     return results

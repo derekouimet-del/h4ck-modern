@@ -52,6 +52,7 @@ async def scan_ports(
     allow_public: bool = False,
     allow_random: bool = False,
     reporter: Reporter | None = None,
+    verbose: bool = False,
 ) -> list[PortResult]:
     host_list = validate_targets(
         targets, allow_public=allow_public, allow_random=allow_random
@@ -71,17 +72,27 @@ async def scan_ports(
     for coro in asyncio.as_completed(tasks):
         res = await coro
         results.append(res)
-        if res.open and reporter is not None:
-            reporter.add(
-                Finding(
-                    category="open-port",
-                    target=res.host,
-                    detail=f"open ({res.latency_ms:.0f} ms)"
-                    if res.latency_ms is not None
-                    else "open",
-                    port=res.port,
+        if reporter is not None:
+            if res.open:
+                reporter.add(
+                    Finding(
+                        category="open-port",
+                        target=res.host,
+                        detail=f"open ({res.latency_ms:.0f} ms)"
+                        if res.latency_ms is not None
+                        else "open",
+                        port=res.port,
+                    )
                 )
-            )
+            elif verbose:
+                reporter.add(
+                    Finding(
+                        category="closed-port",
+                        target=res.host,
+                        detail="closed",
+                        port=res.port,
+                    )
+                )
 
     results.sort(key=lambda r: (r.host, r.port))
     return results
