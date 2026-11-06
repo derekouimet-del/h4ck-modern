@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "h4ck-modern"
+version = "0.1.0"
+description = "Modern async network & web reconnaissance tool for authorized targets only"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.26.0",
+    "typer[all]>=0.12.0",
+    "rich>=13.0.0",
+]
+
+[project.scripts]
+h4ck = "h4ck.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
