@@ -1,9 +1,9 @@
 """RTSP module — rtsp_brute, rtsp_capture, fortune_rtsp.
 
 DANGER: Credential brute-forcing against third-party devices is illegal in most
-jurisdictions. The brute-force path requires --authorize-brute and a user
-supplied wordlist; it only tests connectivity/auth against hosts you explicitly
-name. No password dictionary is bundled.
+jurisdictions. The brute-force path requires --authorize-brute and only tests
+connectivity/auth against hosts you explicitly name. Bundled wordlists from the
+original fagci/h4ck repo are included for testing on devices you own.
 """
 
 from __future__ import annotations
@@ -16,6 +16,8 @@ from typing import Iterable
 
 from .output import Finding, Reporter
 from .scope import ScopeError, validate_targets
+
+DEFAULT_WORDLIST = Path(__file__).resolve().parent / "data" / "brute" / "rtsp.txt"
 
 
 RTSP_OPTIONS = (
@@ -95,8 +97,9 @@ async def rtsp_brute(
 ) -> list[dict]:
     """Brute-force RTSP authentication on *targets*.
 
-    Requires --authorize-brute and --wordlist. Only scan hosts you own or have
-    written authorization to test. No wordlist is bundled — supply your own.
+    Requires --authorize-brute. Defaults to the bundled data/brute/rtsp.txt
+    wordlist unless --wordlist is provided. Only scan hosts you own or have
+    written authorization to test.
     """
     if not authorize_brute:
         raise ScopeError(
@@ -105,7 +108,7 @@ async def rtsp_brute(
             "authorization to test."
         )
     if wordlist is None:
-        raise ScopeError("--wordlist is required for RTSP brute-forcing.")
+        wordlist = DEFAULT_WORDLIST
     if not wordlist.exists():
         raise ScopeError(f"Wordlist not found: {wordlist}")
 

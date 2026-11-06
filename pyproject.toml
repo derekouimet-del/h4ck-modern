@@ -19,3 +19,6 @@ h4ck = "h4ck.cli:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+h4ck = ["data/brute/*.txt"]

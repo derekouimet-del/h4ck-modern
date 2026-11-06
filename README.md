@@ -260,19 +260,23 @@ h4ck fortune-rtsp --count 100 --random-internet --confirm --json
 
 ### `rtsp-brute` — RTSP credential brute-force (rtsp_brute)
 
-Attempts RTSP authentication against targets using a user-supplied wordlist.
-**No password dictionary is bundled** — you supply your own wordlist (one
-`user:pass` or `user` per line).
+Attempts RTSP authentication against targets using a wordlist. Bundled wordlists
+from the original fagci/h4ck repo are included at `src/h4ck/data/brute/`:
+`rtsp.txt` (28 entries) and `rtsp_new.txt` (16 entries). If `--wordlist` is not
+provided, `rtsp.txt` is used by default.
+
+**No password dictionary is required** — but you must pass `--authorize-brute`
+to explicitly opt in.
 
 ```bash
-# Requires explicit authorization opt-in
-h4ck rtsp-brute 10.0.0.5 --port 554 --wordlist my_wordlist.txt --authorize-brute
+# Uses bundled data/brute/rtsp.txt by default
+h4ck rtsp-brute 10.0.0.5 --port 554 --authorize-brute
 
-# Multiple targets from a file
-h4ck rtsp-brute targets.txt --port 554 --wordlist wl.txt --authorize-brute --json
+# Use your own wordlist
+h4ck rtsp-brute targets.txt --port 554 --wordlist my_wordlist.txt --authorize-brute --json
 
 # Save hits to SQLite
-h4ck rtsp-brute 10.0.0.5 --port 554 --wordlist wl.txt --authorize-brute --save local/rtsp_brute.db
+h4ck rtsp-brute 10.0.0.5 --port 554 --authorize-brute --save local/rtsp_brute.db
 ```
 
 **Options**
@@ -281,7 +285,7 @@ h4ck rtsp-brute 10.0.0.5 --port 554 --wordlist wl.txt --authorize-brute --save l
 |---|---|---|
 | `targets` | (required) | Host/IP or path to host list |
 | `--port` | `554` | RTSP port |
-| `--wordlist` / `-w` | (required) | Wordlist file (`user:pass` or `user` per line) |
+| `--wordlist` / `-w` | bundled `rtsp.txt` | Wordlist file (`user:pass` or `user` per line) |
 | `--authorize-brute` | — | Authorize RTSP brute-forcing |
 | `--concurrency` / `-c` | `50` | Max concurrent attempts |
 | `--json` | — | Emit JSON |
