@@ -37,6 +37,7 @@ async def fortune_scan(
     seed: int | None = None,
     allow_random: bool = False,
     reporter: Reporter | None = None,
+    verbose: bool = False,
 ) -> list[dict]:
     """Scan *count* random public IPs for open ports/services.
 
@@ -57,6 +58,7 @@ async def fortune_scan(
         allow_public=True,
         allow_random=True,
         reporter=reporter,
+        verbose=verbose,
     )
 
     out: list[dict] = []
@@ -88,6 +90,7 @@ async def fortune_http_cam(
     *,
     allow_random: bool = False,
     reporter: Reporter | None = None,
+    verbose: bool = False,
 ) -> list[dict]:
     """Probe random IPs for exposed HTTP camera/web interfaces (fortune_http_cam)."""
     if not allow_random:
@@ -98,9 +101,27 @@ async def fortune_http_cam(
     results: list[dict] = []
 
     async def probe(ip):
+        if verbose and reporter is not None:
+            reporter.add(
+                Finding(
+                    category="fortune-http-cam",
+                    target=ip,
+                    detail="probing HTTP",
+                    port=80,
+                )
+            )
         status = await _http_probe(ip, 80, "http", semaphore)
         if status and status[0] == 200:
             return {"ip": ip, "port": 80, "status": status[0], "size": status[1], "server": status[2]}
+        if verbose and reporter is not None:
+            reporter.add(
+                Finding(
+                    category="fortune-http-cam",
+                    target=ip,
+                    detail="probing HTTP 8080",
+                    port=8080,
+                )
+            )
         status = await _http_probe(ip, 8080, "http", semaphore)
         if status and status[0] == 200:
             return {"ip": ip, "port": 8080, "status": status[0], "size": status[1], "server": status[2]}
@@ -127,6 +148,7 @@ async def fortune_rtsp(
     *,
     allow_random: bool = False,
     reporter: Reporter | None = None,
+    verbose: bool = False,
 ) -> list[dict]:
     """Probe random IPs for open RTSP port 554 (fortune_rtsp)."""
     if not allow_random:
@@ -141,6 +163,7 @@ async def fortune_rtsp(
         allow_public=True,
         allow_random=True,
         reporter=reporter,
+        verbose=verbose,
     )
     out = [
         {"ip": r.host, "port": r.port, "latency_ms": r.latency_ms}

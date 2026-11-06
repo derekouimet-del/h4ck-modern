@@ -94,6 +94,7 @@ async def rtsp_brute(
     authorize_brute: bool = False,
     concurrency: int = 50,
     reporter: Reporter | None = None,
+    verbose: bool = False,
 ) -> list[dict]:
     """Brute-force RTSP authentication on *targets*.
 
@@ -131,6 +132,15 @@ async def rtsp_brute(
     semaphore = asyncio.Semaphore(concurrency)
 
     async def try_host(host):
+        if verbose and reporter is not None:
+            reporter.add(
+                Finding(
+                    category="rtsp-brute",
+                    target=host,
+                    detail=f"probing RTSP port {port}",
+                    port=port,
+                )
+            )
         reachable = await _rtsp_options(host, port)
         if not reachable:
             return
@@ -159,6 +169,7 @@ async def rtsp_capture(
     port: int = 554,
     output_dir: Path | None = None,
     reporter: Reporter | None = None,
+    verbose: bool = False,
 ) -> list[dict]:
     """Probe RTSP targets and report reachable streams (rtsp_capture).
 
@@ -170,6 +181,15 @@ async def rtsp_capture(
     results: list[dict] = []
 
     for host in host_list:
+        if verbose and reporter is not None:
+            reporter.add(
+                Finding(
+                    category="rtsp-capture",
+                    target=host,
+                    detail=f"capturing RTSP port {port}",
+                    port=port,
+                )
+            )
         reachable = await _rtsp_options(host, port)
         entry = {"host": host, "port": port, "reachable": reachable}
         results.append(entry)

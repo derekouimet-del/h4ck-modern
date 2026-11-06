@@ -159,6 +159,7 @@ def fortune(
     seed: Optional[int] = typer.Option(None, "--seed", help="RNG seed"),
     json_out: bool = typer.Option(False, "--json", help="Emit JSON"),
     save: Optional[Path] = typer.Option(None, "--save", help="Save results to SQLite DB"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show each IP being probed"),
 ) -> None:
     """Random-IP scanner / generator (fortune*, fortune_port)."""
     if random_internet and not confirm:
@@ -175,6 +176,7 @@ def fortune(
             allow_random=random_internet,
             reporter=reporter,
             seed=seed,
+            verbose=verbose,
         )
 
     try:
@@ -197,6 +199,7 @@ def fortune_http_cam(
     random_internet: bool = typer.Option(False, "--random-internet", help="Enable random public IP scanning"),
     confirm: bool = typer.Option(False, "--confirm", help="Skip interactive confirmation"),
     json_out: bool = typer.Option(False, "--json", help="Emit JSON"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show each IP being probed"),
 ) -> None:
     """Probe random IPs for HTTP camera/web interfaces (fortune_http_cam)."""
     if random_internet and not confirm:
@@ -208,7 +211,7 @@ def fortune_http_cam(
 
     async def _run():
         return await fortune_http_cam_module(
-            count, allow_random=random_internet, reporter=reporter
+            count, allow_random=random_internet, reporter=reporter, verbose=verbose
         )
 
     try:
@@ -225,6 +228,7 @@ def fortune_rtsp(
     random_internet: bool = typer.Option(False, "--random-internet", help="Enable random public IP scanning"),
     confirm: bool = typer.Option(False, "--confirm", help="Skip interactive confirmation"),
     json_out: bool = typer.Option(False, "--json", help="Emit JSON"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show each IP being probed"),
 ) -> None:
     """Probe random IPs for open RTSP port 554 (fortune_rtsp)."""
     if random_internet and not confirm:
@@ -236,7 +240,7 @@ def fortune_rtsp(
 
     async def _run():
         return await fortune_rtsp_module(
-            count, allow_random=random_internet, reporter=reporter
+            count, allow_random=random_internet, reporter=reporter, verbose=verbose
         )
 
     try:
@@ -256,6 +260,7 @@ def rtsp_brute(
     concurrency: int = typer.Option(50, "--concurrency", "-c", help="Max concurrent attempts"),
     json_out: bool = typer.Option(False, "--json", help="Emit JSON"),
     save: Optional[Path] = typer.Option(None, "--save", help="Save results to SQLite DB"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show each host being probed"),
 ) -> None:
     """RTSP credential brute-force (rtsp_brute).
 
@@ -272,6 +277,7 @@ def rtsp_brute(
             authorize_brute=authorize_brute,
             concurrency=concurrency,
             reporter=reporter,
+            verbose=verbose,
         )
 
     try:
@@ -294,12 +300,13 @@ def rtsp_capture(
     port: int = typer.Option(554, "--port", help="RTSP port"),
     json_out: bool = typer.Option(False, "--json", help="Emit JSON"),
     save: Optional[Path] = typer.Option(None, "--save", help="Save results to SQLite DB"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show each host being captured"),
 ) -> None:
     """RTSP stream reachability probe (rtsp_capture)."""
     reporter = _reporter(json_out)
 
     async def _run():
-        return await rtsp_capture_module(targets, port=port, reporter=reporter)
+        return await rtsp_capture_module(targets, port=port, reporter=reporter, verbose=verbose)
 
     try:
         asyncio.run(_run())
@@ -475,6 +482,7 @@ def camdike(
     timeout_minutes: Optional[float] = typer.Option(
         None, "--timeout-minutes", help="Stop after N minutes"
     ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show each IP being probed"),
 ) -> None:
     """Full camdike pipeline: scan -> brute -> capture -> post (camdike.sh)."""
     async def _run():
@@ -489,6 +497,7 @@ def camdike(
             loop=loop,
             json_out=json_out,
             timeout_minutes=timeout_minutes,
+            verbose=verbose,
         )
 
     try:
@@ -523,6 +532,7 @@ def camdike_lite(
         True, "--loop/--no-loop", help="Run in a loop"
     ),
     json_out: bool = typer.Option(False, "--json", help="Emit JSON"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show each IP being probed"),
 ) -> None:
     """Lite camdike pipeline (camdike_lite.sh)."""
     async def _run():
@@ -536,6 +546,7 @@ def camdike_lite(
             post_data=post_data,
             loop=loop,
             json_out=json_out,
+            verbose=verbose,
         )
 
     try:
@@ -564,6 +575,7 @@ def camdike_lite_no_brute(
         True, "--loop/--no-loop", help="Run in a loop"
     ),
     json_out: bool = typer.Option(False, "--json", help="Emit JSON"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show each IP being probed"),
 ) -> None:
     """Lite camdike without brute force (camdike_lite_no_brute.sh)."""
     async def _run():
@@ -575,6 +587,7 @@ def camdike_lite_no_brute(
             post_data=post_data,
             loop=loop,
             json_out=json_out,
+            verbose=verbose,
         )
 
     try:

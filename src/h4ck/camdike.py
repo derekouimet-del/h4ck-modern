@@ -37,6 +37,7 @@ async def _run_pipeline(
     post_target: str,
     post_data: Optional[str],
     reporter: Reporter,
+    verbose: bool = False,
 ) -> None:
     if random_internet and not confirm:
         console.print("[yellow]Aborted.[/yellow]")
@@ -49,6 +50,7 @@ async def _run_pipeline(
         count,
         allow_random=random_internet,
         reporter=reporter,
+        verbose=verbose,
     )
     hosts = [r["ip"] for r in rtsp_hosts if r.get("port") == 554]
     console.print(f"[green]Found {len(hosts)} hosts with RTSP port 554 open[/green]")
@@ -77,6 +79,7 @@ async def _run_pipeline(
             authorize_brute=True,
             concurrency=50,
             reporter=reporter,
+            verbose=verbose,
         )
         brute_hosts = [
             r["host"] for r in brute_results if r.get("credentials")
@@ -102,6 +105,7 @@ async def _run_pipeline(
             capture_targets,
             port=554,
             reporter=reporter,
+            verbose=verbose,
         )
 
     # Step 4: POST (camposter).
@@ -131,6 +135,7 @@ async def camdike_module(
     loop: bool,
     json_out: bool,
     timeout_minutes: Optional[float],
+    verbose: bool = False,
 ) -> None:
     """Full camdike pipeline: scan -> brute -> capture -> post (camdike.sh)."""
     reporter = Reporter(json_out=json_out)
@@ -149,6 +154,7 @@ async def camdike_module(
                     post_target=post_target,
                     post_data=post_data,
                     reporter=reporter,
+                    verbose=verbose,
                 )
                 reporter.summary()
                 await asyncio.sleep(5)
@@ -165,6 +171,7 @@ async def camdike_module(
                 post_target=post_target,
                 post_data=post_data,
                 reporter=reporter,
+                verbose=verbose,
             )
     except ScopeError as exc:
         console.print(f"[red]Scope error:[/red] {exc}")
@@ -185,6 +192,7 @@ async def camdike_lite_module(
     post_data: Optional[str],
     loop: bool,
     json_out: bool,
+    verbose: bool = False,
 ) -> None:
     """Lite camdike pipeline (camdike_lite.sh)."""
     reporter = Reporter(json_out=json_out)
@@ -203,6 +211,7 @@ async def camdike_lite_module(
                     post_target=post_target,
                     post_data=post_data,
                     reporter=reporter,
+                    verbose=verbose,
                 )
                 reporter.summary()
                 await asyncio.sleep(5)
@@ -219,6 +228,7 @@ async def camdike_lite_module(
                 post_target=post_target,
                 post_data=post_data,
                 reporter=reporter,
+                verbose=verbose,
             )
     except ScopeError as exc:
         console.print(f"[red]Scope error:[/red] {exc}")
@@ -237,6 +247,7 @@ async def camdike_lite_no_brute_module(
     post_data: Optional[str],
     loop: bool,
     json_out: bool,
+    verbose: bool = False,
 ) -> None:
     """Lite camdike without brute force (camdike_lite_no_brute.sh).
 
@@ -259,6 +270,7 @@ async def camdike_lite_no_brute_module(
                     post_target=post_target,
                     post_data=post_data,
                     reporter=reporter,
+                    verbose=verbose,
                 )
                 reporter.summary()
                 await asyncio.sleep(5)
@@ -275,6 +287,7 @@ async def camdike_lite_no_brute_module(
                 post_target=post_target,
                 post_data=post_data,
                 reporter=reporter,
+                verbose=verbose,
             )
     except ScopeError as exc:
         console.print(f"[red]Scope error:[/red] {exc}")
